@@ -3,7 +3,7 @@ Git repository for Cosmic Explorer Science Trace-ability matrix studies
 
 ## Population Modeling Workflow
 
-| **Stage 1** | **Stage 2** | **Stage 3** | **Stage 4** | **Stage 5** |
+| **Stage 1** | Type of the source | **Stage 2** | **Stage 3** | **Stage 4** |
 |------------|------------|------------|------------|------------|
 | **Initial population data assuming mass, spin and redshift models** | Stellar mass BHs | **Fisher errors:**<br>different network configurations,<br>lower cut-off frequencies | Population analysis: Stellar mass BHs | **Population hyperparameter estimates and implications:**<br>Redshift evolution of current and early Universe BH populations<br>Star formation rate density estimate<br>Merger rate density estimates<br>Etc. |
 | **Initial population data assuming mass, spin and redshift models** | BNS | **Fisher errors:**<br>different network configurations,<br>lower cut-off frequencies | Population analysis: BNS | **Population hyperparameter estimates and implications** <br>NS maximum mass estimates and distinguishing NS population from BHs<br>Etc.|
