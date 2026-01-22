@@ -4,9 +4,9 @@ Git repository for Cosmic Explorer Science Trace-ability matrix studies
 | Detector Configurations | Lower cut-off frequencies | Config/analysis/analysts details | Review status/scripts |
 |-------------------------|---------------------------|----------------------------------|----------------------|
 | ET triangle 10 km + CE 20 km [1.5 MW PSDs Aplus coating] | Flow = 5, 7, 10, 15 Hz |  |  |
-| ET triangle 10 km + CE 40 km [1.5 MW PSDs Aplus coating] |  |  |  |
-| LIO Asharp + two 3G [CE40 + ET triangle] |  |  |  |
-| LIO Asharp + two 3G [CE40 + CE20] |  |  |  |
+| ET triangle 10 km + CE 40 km [1.5 MW PSDs Aplus coating] |  Flow = 15 Hz, 10 Hz, 5 Hz|  |  |
+| LIO Asharp + two 3G [CE40 + ET triangle] | Flow = 15 Hz, 10 Hz, 5 Hz |  |  |
+| LIO Asharp + two 3G [CE40 + CE20] | Flow = 15 Hz, 10 Hz, 5 Hz |  |  |
 | HLI at Asharp sensitivity | Flow = 15 Hz, 10 Hz, 5 Hz |  |  |
 
 
