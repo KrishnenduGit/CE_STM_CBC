@@ -1,5 +1,5 @@
 # Cosmic Explorer Sceince Trace-ability matrix studies 
-Git repository for Cosmic Explorer Science Trace-ability matrix studies
+## Netwrok Details
 
 | Detector Configurations | Lower cut-off frequencies | Config/analysis/analysts details | Review status/scripts |
 |-------------------------|---------------------------|----------------------------------|----------------------|
