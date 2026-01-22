@@ -1,8 +1,8 @@
 # Cosmic Explorer Sceince Trace-ability matrix studies 
 ## Netwrok Details
 
-| Detector Configurations | Lower cut-off frequencies | 
-|-------------------------|---------------------------|
+| Detector Configurations | Lower cut-off frequencies | Other |
+|-------------------------|---------------------------|---------------------------|
 | ET triangle 10 km + CE 20 km [1.5 MW PSDs Aplus coating] | Flow = 15 Hz, 10 Hz, 5 Hz |  
 | ET triangle 10 km + CE 40 km [1.5 MW PSDs Aplus coating] |  Flow = 15 Hz, 10 Hz, 5 Hz |  
 | LIO Asharp + two 3G [CE40 + ET triangle] | Flow = 15 Hz, 10 Hz, 5 Hz |  
