@@ -1,7 +1,7 @@
 # Cosmic Explorer Sceince Trace-ability matrix studies 
 Git repository for Cosmic Explorer Science Trace-ability matrix studies
 
-## Population Modeling Workflow
+## Population Analysis Workflow & Data Products
 
 | **Stage 1** | Type of the source | **Stage 2** | **Stage 3** | **Stage 4** |
 |------------|------------|------------|------------|------------|
