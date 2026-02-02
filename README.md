@@ -1,5 +1,5 @@
 # Cosmic Explorer Sceince Trace-ability matrix studies 
-## Netwrok Details
+## Network Details
 
 | Detector Configurations | Lower cut-off frequencies | Other |
 |-------------------------|---------------------------|---------------------------|
