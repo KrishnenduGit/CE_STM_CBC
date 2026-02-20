@@ -14,17 +14,57 @@
 - [COBA document](https://cds.cern.ch/record/2855729/files/2303.15923.pdf)
 - ET triangle Sardinia, CE at Texas and Washington state
 - Last column is the x azimuth then add 90 to get the y-arm azimuth
-- Updating BlueBEAR `/rds/projects/n/naderivk-siqm-test/venv/lib/python3.10/site-packages/bilby/gw/detector/`
 
-![Screenshot_2025-05-02_at_09.06.56](/uploads/e9e0f715d256dc290a98bdb5729b451b/Screenshot_2025-05-02_at_09.06.56.png)
-# PSD Details
+```
+name = 'CEA'
+power_spectral_density = PowerSpectralDensity(psd_file='T2000017-v6_cosmic_explorer_strain.txt')
+minimum_frequency = 5
+maximum_frequency = 2048
+length = 40
+latitude = 46
+longitude = -125
+elevation = 142.554
+xarm_azimuth = 260.0
+yarm_azimuth = 350.0
+# xarm_tilt = -6.195e-4
+# yarm_tilt = 1.25e-5
 
-- From [this page](https://apps.et-gw.eu/tds/?content=3&r=18213), [this page](https://github.com/cosmic-explorer/mpsac_detector_networks) and [Bilby](https://git.ligo.org/lscsoft/bilby/-/tree/master/bilby/gw/detector/noise_curves?ref_type=heads)
+```
 
-![ET_MPSAC_COBA](/uploads/7bef53bf08a9a3176aed75aa9a919ca4/ET_MPSAC_COBA.png)![ET_Bilby_Comp](/uploads/7fa481ebf16c5be9b5303d216704757e/ET_Bilby_Comp.png)![CE_PSDs](/uploads/bdc8410865442d3ee43d9c73e1627215/CE_PSDs.png)
+and 
 
+```
+# MPSAC
+name = 'CEB'
+power_spectral_density = PowerSpectralDensity(psd_file='T2000017-v6_cosmic_explorer_20km_strain.txt')
+minimum_frequency = 5
+maximum_frequency = 2048
+length = 20
+latitude = 29
+longitude = -94
+elevation = 142.554
+xarm_azimuth = 200.0
+yarm_azimuth = 290.0
+# xarm_tilt = -6.195e-4
+# yarm_tilt = 1.25e-5
+```
 
-- In the ET file(s), the two columns correspond to high-frequency (HF) and low frequency (LF) respectively, but we need the combined one. 
+finally, ET
+
+```
+# Proposed ET at Serdinia, Italy, coordinates from GWBench and converted to degrees
+name = 'ETS1'
+power_spectral_density = PowerSpectralDensity(psd_file='18213_ET10kmcolumns_first2cols.txt')
+length = 10
+minimum_frequency = 5 # changing to 5 from 10
+maximum_frequency = 2048
+latitude = 40 + 31./60 # conversions for second and milli sec
+longitude = 9 +  25./60
+elevation = 51.884
+xarm_azimuth = 90.0
+yarm_azimuth = 180.0
+shape = 'Triangle'
+``` 
 
 ## Population Analysis Workflow & Data Products
 
