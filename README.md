@@ -9,6 +9,22 @@
 | LIO Asharp + two 3G [CE40 + CE20] | Flow = 15 Hz, 10 Hz, 5 Hz | 
 | HLI at Asharp sensitivity | Flow = 15 Hz, 10 Hz, 5 Hz | 
 
+## Location for CE and ET
+- [MPSAC Document](https://dcc.cosmicexplorer.org/public/0163/T2300003/002/CE_Detectors_for_MPSAC.pdf)
+- [COBA document](https://cds.cern.ch/record/2855729/files/2303.15923.pdf)
+- ET triangle Sardinia, CE at Texas and Washington state
+- Last column is the x azimuth then add 90 to get the y-arm azimuth
+- Updating BlueBEAR `/rds/projects/n/naderivk-siqm-test/venv/lib/python3.10/site-packages/bilby/gw/detector/`
+
+![Screenshot_2025-05-02_at_09.06.56](/uploads/e9e0f715d256dc290a98bdb5729b451b/Screenshot_2025-05-02_at_09.06.56.png)
+# PSD Details
+
+- From [this page](https://apps.et-gw.eu/tds/?content=3&r=18213), [this page](https://github.com/cosmic-explorer/mpsac_detector_networks) and [Bilby](https://git.ligo.org/lscsoft/bilby/-/tree/master/bilby/gw/detector/noise_curves?ref_type=heads)
+
+![ET_MPSAC_COBA](/uploads/7bef53bf08a9a3176aed75aa9a919ca4/ET_MPSAC_COBA.png)![ET_Bilby_Comp](/uploads/7fa481ebf16c5be9b5303d216704757e/ET_Bilby_Comp.png)![CE_PSDs](/uploads/bdc8410865442d3ee43d9c73e1627215/CE_PSDs.png)
+
+
+- In the ET file(s), the two columns correspond to high-frequency (HF) and low frequency (LF) respectively, but we need the combined one. 
 
 ## Population Analysis Workflow & Data Products
 
