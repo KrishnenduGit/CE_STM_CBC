@@ -1,16 +1,17 @@
 #!/ligo/home/ligo.org/shiksha.pandey/.conda/envs/gwfast311/bin/python
 from GWForge.population.redshift import Redshift
-from configparser import ConfigParser
+from configparser import ConfigParser, NoOptionError
 from lal import YRJUL_SI
 import json
 from gwpopulation.models.redshift import MadauDickinsonRedshift
 import numpy as np
 import bilby
 import argparse
+import logging
 from pycbc.population.population_models import coalescence_rate, norm_redshift_distribution
 
 
-def generate_redshift_samples(config_file, n_samples=None, duration=None):
+def generate_redshift_samples(config_file, n_samples=None):
     """
     Generates redshift samples using the Madau-Dickinson model.
     
@@ -31,11 +32,6 @@ def generate_redshift_samples(config_file, n_samples=None, duration=None):
     local_merger_rate_density = config.getfloat('Redshift', 'local-merger-rate-density')
     gps_start_time = config.getfloat('Redshift', 'gps-start-time')
     
-    # This fallback option for analysis_time is given because Redshift needs to 
-    # be called with an analysis time argument. If n_samples is provided 
-    # to the function, this duration will not be used
-
-    analysis_time = config.getfloat('Redshift', 'duration', fallback=YRJUL_SI)
     cosmology = config.get('Redshift', 'cosmology', fallback='Planck18')
     
     redshift_parameters = config.get('Redshift', 'redshift-parameters', 
@@ -49,6 +45,27 @@ def generate_redshift_samples(config_file, n_samples=None, duration=None):
     Tcmb0 = config.getfloat('Redshift', 'Tcmb0', fallback=2.735)
 
     print(f"Using redshift model: {redshift_model}")
+
+    if n_samples:
+        try:
+            analysis_time = config.getfloat('Redshift', 'duration')
+            logging.warning('n_samples provided. Ignoring duration provided in config')
+        except Exception:
+            pass
+        num_samples = n_samples
+        # This fallback option for analysis_time is given because Redshift class 
+        # needs to be called with an analysis time argument. If n_samples is provided 
+        # to the function, this duration will not be used
+        analysis_time = YRJUL_SI
+    else:
+        try:
+            analysis_time = config.getfloat('Redshift', 'duration')
+            average_time_interval = z.average_time_between_signals()
+            logging.info('Average time interval between signals = {:.2f}'.format(average_time_interval))
+            num_samples = int(analysis_time / average_time_interval)
+        except NoOptionError:
+            logging.error('Must provide [Redshift] [duration] in config if num_samples is None')
+            raise NoOptionError('duration', 'Redshift')
 
     # Create Redshift object
     z = Redshift(redshift_model=redshift_model,
@@ -81,18 +98,6 @@ def generate_redshift_samples(config_file, n_samples=None, duration=None):
 
     # Create Prior and Sample
     prior = bilby.core.prior.Interped(xx=xx, yy=prob, minimum=0., maximum=maximum_redshift, name='redshift')
-
-    if n_samples:
-        if duration:
-            raise ValueError('num_samples provided. Duration has to be None')
-        else:
-            num_samples = n_samples
-    elif duration:
-        average_time_interval = z.average_time_between_signals()
-        logging.info('Average time interval between signals = {:.2f}'.format(average_time_interval))
-        num_samples = int(analysis_time / average_time_interval)
-    else:
-        raise ValueError('Either n_samples or duration must be provided')
     
     z_samples = prior.sample(num_samples)
     p_z_samples = prior.probability_density(z_samples)
