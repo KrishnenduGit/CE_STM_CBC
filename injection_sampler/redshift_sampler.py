@@ -8,7 +8,6 @@ import numpy as np
 import bilby
 import argparse
 import logging
-from pycbc.population.population_models import coalescence_rate, norm_redshift_distribution
 
 
 def generate_redshift_samples(config_file, n_samples=None):
@@ -46,23 +45,21 @@ def generate_redshift_samples(config_file, n_samples=None):
 
     print(f"Using redshift model: {redshift_model}")
 
+    # Set analysis_time 
     if n_samples:
         try:
-            analysis_time = config.getfloat('Redshift', 'duration')
+            config.getfloat('Redshift', 'duration')
             logging.warning('n_samples provided. Ignoring duration provided in config')
         except Exception:
             pass
-        num_samples = n_samples
         # This fallback option for analysis_time is given because Redshift class 
         # needs to be called with an analysis time argument. If n_samples is provided 
         # to the function, this duration will not be used
         analysis_time = YRJUL_SI
+
     else:
         try:
             analysis_time = config.getfloat('Redshift', 'duration')
-            average_time_interval = z.average_time_between_signals()
-            logging.info('Average time interval between signals = {:.2f}'.format(average_time_interval))
-            num_samples = int(analysis_time / average_time_interval)
         except NoOptionError:
             logging.error('Must provide [Redshift] [duration] in config if num_samples is None')
             raise NoOptionError('duration', 'Redshift')
@@ -77,6 +74,19 @@ def generate_redshift_samples(config_file, n_samples=None):
             parameters = redshift_parameters,
             time_delay_model = time_delay_model,
             H0=H0, Om0=Om0, Ode0=Ode0)
+
+    gps_start_time = config.get('Redshift', 'gps-start-time', fallback=0.0) # For setting tc values
+    if n_samples:
+        num_samples = n_samples
+        tc_samples = np.zeros(num_samples) + gps_start_time
+    else:
+        average_time_interval = z.average_time_between_signals()
+        logging.info('Average time interval between signals = {:.2f}'.format(average_time_interval))
+        num_samples = int(analysis_time / average_time_interval)
+        
+        time_gap = bilby.prior.analytical.Exponential(mu=average_time_interval)
+        time_interval = time_gap.sample(num_samples)
+        tc_samples = time_interval.cumsum() + gps_start_time
 
     # Calculate Rate
     rate = z.coalescence_rate()
@@ -102,7 +112,7 @@ def generate_redshift_samples(config_file, n_samples=None):
     z_samples = prior.sample(num_samples)
     p_z_samples = prior.probability_density(z_samples)
     
-    return z_samples, p_z_samples
+    return z_samples, p_z_samples, tc_samples
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
