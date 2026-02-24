@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import bilby
 from compose.eos import Metadata, Table
@@ -7,14 +8,30 @@ from scipy.interpolate import interp1d
 def load_sfho_eos(eos_dir):
     """
     Loads SFHo EOS from CompOSE files and converts it into a bilby tabularEOS.
+    Caches converted pressure and energy arrays to {eos_dir}/sfho_p_e_geom.txt.
+    Subsequent calls load the arrays from cache.
 
     Args:
-        eos_dir (str): path to CompOSE EOS directory.
+        eos_dir (str): path to CompOSE EOS directory. 
 
     Returns:
         bilby.gw.eos.EOSFamily: EOS family wrapper.
     """
-    # Load CompOSE metadata
+
+    cache_path = os.path.join(eos_dir, "sfho_p_e_geom.txt")
+
+    # If cache_path exists, try loading the pressure and energy from file.
+    if os.path.exists(cache_path):
+        print(f"Loading Pressure - Energy from cache: {cache_path}")
+        data = np.loadtxt(cache_path)
+        pressure, energy = data[:,0], data[:,1]
+        return bilby.gw.eos.EOSFamily(
+            bilby.gw.eos.TabularEOS(np.column_stack((pressure, energy)))
+        )
+
+
+    # If cache_path does not exist, compute pressure and energy from CompOSE.
+    # Load CompOSE metadata (map CompOSE numeric IDs to particle names)
     md = Metadata(
         pairs={
             0: ("e", "electron"), 10: ("n", "neutron"), 11: ("p", "proton"),
@@ -27,13 +44,13 @@ def load_sfho_eos(eos_dir):
     # Load the EOS table
     eos = Table(md)
     eos.read(eos_dir)
-    eos.compute_cs2(floor=1e-6)
-    eos.compute_abar()
+    eos.compute_cs2(floor=1e-6) # Sound speed squred
+    eos.compute_abar() # Average baryon number
     eos.validate()
 
-    # Slice T=0 for beta-equilibrium
+    # Slice T=0 for beta-equilibrium n <-> p + e + v.  This fixes the proton fraction.
     eos_be = eos.slice_at_t_idx(0).make_beta_eq_table()
-    nb = eos_be.nb.flatten()
+    nb = eos_be.nb.flatten() # Baryon number density [fm^-3]
     
     # Constants
     c_cgs = 2.99792458e10 # cm/s
@@ -44,13 +61,25 @@ def load_sfho_eos(eos_dir):
     G_SI = bilby.utils.gravitational_constant
     MSUN_SI = bilby.utils.solar_mass
     
-    # Geometric conversion factor
+    # Geometric conversion factor: g/cm^3 --> m^-2
     cgs_to_geom = 1000 * (G_SI / c_SI**2)
 
-    # Build pressure and density arrays
+    # Build pressure and energy density arrays
+    # Pressure [MeV/fm^3]: P = Q1 * n_b where Q1 = pressure per baryon [MeV]
+    # Converted to geometric units by multiplying by mevfm3_gcm3 * cgs_to_geom
     pressure = eos_be.thermo['Q1'].flatten() * nb * mevfm3_gcm3 * cgs_to_geom
+
+    # Energy density [MeV/fm^3]: ε = (Q7 + 1)* n_b * m_n where Q7 = internal energy per baryon/m_n
+    # +1 adds back the rest mass energy
+    # Converted to geometric units
     energy = (eos_be.thermo['Q7'].flatten() + 1) * nb * m_n * mevfm3_gcm3 * cgs_to_geom
 
+    # Save arrays to cache
+    print(f"Saving EOS cache to: {cache_path}")
+    np.savetxt(cache_path, np.column_stack((pressure, energy)),
+               header = "Pressure [m^-2]    Energy_Density [m^-2]" )
+    
+    # Create bilby EOS objects. TabularEOS interpolates P(ε) from table and EOSFamily solves the TOV equations
     return bilby.gw.eos.EOSFamily(bilby.gw.eos.TabularEOS(
         np.column_stack((pressure, energy))
     ))
@@ -64,6 +93,7 @@ class LambdaCalculator:
     Otherwise compute Lambda directly via the EOS solver (slower).
     """
     def __init__(self, eos_dir, method="interp", mmin=1.0, grid_size=500):
+        # Load EOS (uses cache if available)
         self.fam = load_sfho_eos(eos_dir)
         self.method = method
         self.mmin = mmin
@@ -76,14 +106,14 @@ class LambdaCalculator:
             m_grid = np.linspace(mmin, self.eos_max_mass, grid_size)
             lam_grid = np.array([self._strict_lambda(m) for m in m_grid])
             
-            # Cubic interpolation routine
+            # Cubic interpolation routine with NaN for out-of-bounds
             valid = np.isfinite(lam_grid) & (lam_grid > 0)
             self.interp = interp1d(
                 m_grid[valid], 
                 lam_grid[valid], 
                 kind='cubic', 
                 bounds_error=False, 
-                fill_value=0.0
+                fill_value=np.nan
             )
 
     def _strict_lambda(self, m):
@@ -94,10 +124,10 @@ class LambdaCalculator:
             m (float): mass in m_sun.
 
         Returns:
-            float: Lambda if valid and 0.0 if BH.
+            float: Lambda if valid and NaN if BH.
 
         Raises:
-            ValueError: If the computation of Lambda faills well below the maximum stable mass.
+            ValueError: If the computation of Lambda fails well below the maximum stable mass.
         """
         try:
             lam = self.fam.lambda_from_mass(m)
@@ -106,10 +136,11 @@ class LambdaCalculator:
         except Exception:
             pass
         
+        # Failure well below the max mass limit is indicative of a possible problem with the EOS table
         if m < (self.eos_max_mass - 1e-3): 
             raise ValueError(f"EOS Error: Mass {m:.4f} failed calculation (< Limit {self.eos_max_mass:.4f})")
         
-        return 0.0
+        return np.nan
 
     def get_lambda(self, mass):
         """
