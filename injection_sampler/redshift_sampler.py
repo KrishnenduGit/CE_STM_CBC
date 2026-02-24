@@ -3,11 +3,11 @@ from GWForge.population.redshift import Redshift
 from configparser import ConfigParser, NoOptionError
 from lal import YRJUL_SI
 import json
-from gwpopulation.models.redshift import MadauDickinsonRedshift
 import numpy as np
 import bilby
 import argparse
 import logging
+from GWForge import utils
 
 
 def generate_redshift_samples(config_file, n_samples=None):
@@ -29,7 +29,7 @@ def generate_redshift_samples(config_file, n_samples=None):
     redshift_model = config.get('Redshift', 'redshift-model')
     maximum_redshift = config.getfloat('Redshift', 'maximum-redshift')
     local_merger_rate_density = config.getfloat('Redshift', 'local-merger-rate-density')
-    gps_start_time = config.getfloat('Redshift', 'gps-start-time')
+    gps_start_time = config.getfloat('Redshift', 'gps-start-time', fallback=0.0)
     
     cosmology = config.get('Redshift', 'cosmology', fallback='Planck18')
     
@@ -75,7 +75,6 @@ def generate_redshift_samples(config_file, n_samples=None):
             time_delay_model = time_delay_model,
             H0=H0, Om0=Om0, Ode0=Ode0)
 
-    gps_start_time = config.get('Redshift', 'gps-start-time', fallback=0.0) # For setting tc values
     if n_samples:
         num_samples = n_samples
         tc_samples = np.zeros(num_samples) + gps_start_time
@@ -92,16 +91,17 @@ def generate_redshift_samples(config_file, n_samples=None):
     rate = z.coalescence_rate()
     
     # Use gwpopulation for the grid
+    redshift_model = utils.remove_special_characters(redshift_model.lower())
     if redshift_model == 'madaudickinson':
         logging.info('Generating samples assumming Madau-Dickinson Model')
         from gwpopulation.models.redshift import MadauDickinsonRedshift
-        model = MadauDickinsonRedshift(z_max=self.maximum_redshift)
+        model = MadauDickinsonRedshift(z_max=maximum_redshift)
     elif redshift_model == 'powerlaw':
         logging.info('Generating samples Power-Law Model')
         from gwpopulation.models.redshift import PowerLawRedshift
-        model = PowerLawRedshift(z_max=self.maximum_redshift)
+        model = PowerLawRedshift(z_max=maximum_redshift)
     else:
-        raise ValueError('Redshift model {} is not implemented in GWPopulation')
+        raise ValueError(f'Redshift model {redshift_model} is not implemented in GWPopulation')
     
     xx = model.zs
     prob = rate(xx)
@@ -125,11 +125,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Run Generation
-    z_vals, p_z_vals = generate_md_redshift_samples(args.config_file, 
+    z_vals, p_z_vals, tc_vals = generate_redshift_samples(args.config_file, 
                                                     n_samples=args.n_samples, 
                                                     duration=args.duration)
 
     # Save to File
     print(f"\nSaving {len(z_vals)} samples to {args.output}...")
-    np.savetxt(args.output, np.c_[z_vals, p_z_vals])
+    np.savetxt(args.output, np.c_[z_vals, p_z_vals, tc_vals])
     print("Done.")
