@@ -203,7 +203,7 @@ for cbc_type, cbc_dict in zip(['BBH', 'NSBH', 'BNS'], [bbh_samples, nsbh_samples
 #####################################################################################################
 # TIDAL DEFORMABILITY
 #####################################################################################################
-"""
+
 logging.info(f'Calculating tidal deformability (Lambda)...')
 
 for cbc_dict in [bbh_samples, nsbh_samples, bns_samples]:
@@ -242,7 +242,7 @@ try:
 except Exception as ex:
     logging.error(f'Lambda calculation failed: {ex}')
     sys.exit(1)
-"""
+
 #####################################################################################################
 # DETECTOR FRAME CONVERSIONS and DERIVED SPIN QUANTITIES
 #####################################################################################################
