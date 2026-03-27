@@ -1,4 +1,15 @@
 # Cosmic Explorer Sceince Trace-ability matrix studies 
+
+## Initial Population Data Details: Where do you find the correct data?
+
+| Population Type | Location | Comments |
+|-------------------------|---------------------------|---------------------------|
+| Stellar mass BHs, NSBH, BNS | https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/stellar_mass/data/pop1 | Scripts are here: https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/full_stellar_mass_pop |
+| popIII | https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/pop3 | |
+| pBH | https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/pbh | |
+| IMBBHs | https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/imbhs | |
+
+
 ## Network Details
 
 | Detector Configurations | Lower cut-off frequencies | Other |
