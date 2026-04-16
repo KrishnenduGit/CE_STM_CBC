@@ -16,10 +16,10 @@
 |-------------------------|---------------------------|---------------------------|
 | 1 (CE40hA+, CE20hA+, LI) | 5a (CE40hA+, ET-D, LI) | 7   (CE40hA+, CE20hA+, ET-D)
 | 2 (CE40hAL, CE20hAL, LI) | 5b (CE40hAL, ET-D, LI) | 8a  (CE40hA+, ET-D) 
-| 3 (CE40ℓA+, CE20𝓵A+, LI) | 6a (CE40lA+, ET-D, LI) | 8b  (CE40hA+, ET-2Ls) 
-| 4 (CE40lAL, CE20lAL, LI) | 6b (CE40lA+, ET-D, LI) | 9ab (LH, LL, LI) at A+ and A# sensitivity
+| 3 (CE40𝓵A+, CE20𝓵A+, LI) | 6a (CE40𝓵A+, ET-D, LI) | 8b  (CE40hA+, ET-2Ls) 
+| 4 (CE40𝓵AL, CE20𝓵AL, LI) | 6b (CE40𝓵A+, ET-D, LI) | 9ab (LH, LL, LI) at A+ and A# sensitivity
 
-- CE40 and CE20 denote Cosmic Explorer detectors with 40Km and 20Km arm length, respectively. h/l refer to the circulating laser power (high 1.5 MW, low 1.0 MW). A+/AL denote different coating choices. The detectors are located at the same fiducial sites as the MPSAC studies. We consider low-frequency cutoffs of 7, 10 and 15Hz.
+- CE40 and CE20 denote Cosmic Explorer detectors with 40Km and 20Km arm length, respectively. h/𝓵 refer to the circulating laser power (high 1.5 MW, low 1.0 MW). A+/AL denote different coating choices. The detectors are located at the same fiducial sites as the MPSAC studies. We consider low-frequency cutoffs of 7, 10 and 15Hz.
 - ET-D refers to Einstein Telescope in its triangular configuration, located in the Mediterranean. ET-2Ls refers to Einstein Telescope in its 2L configuration, with detectors located in Sardinia and Meuse-Rhine. We consider a low-frequency cutoff of 5Hz.
 - LH, LL, and LI denote LIGO Hanford, LIGO Livingston and LIGO-India detectors. LI is always considered at A+ sensitivity, except for the 9ab networks where we compare A+ and A# sensitivities for all three detectors. The low-frequency cutoff is 15Hz. 
 
