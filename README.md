@@ -12,13 +12,16 @@
 
 ## Network Details
 
-| Detector Configurations | Lower cut-off frequencies | Other |
+| All | Two of the following | Extreme Cases |
 |-------------------------|---------------------------|---------------------------|
-| ET triangle 10 km + CE 20 km [1.5 MW PSDs Aplus coating] | Flow = 15 Hz, 10 Hz, 5 Hz |  
-| ET triangle 10 km + CE 40 km [1.5 MW PSDs Aplus coating] |  Flow = 15 Hz, 10 Hz, 5 Hz |  
-| LIO Asharp + two 3G [CE40 + ET triangle] | Flow = 15 Hz, 10 Hz, 5 Hz |  
-| LIO Asharp + two 3G [CE40 + CE20] | Flow = 15 Hz, 10 Hz, 5 Hz | 
-| HLI at Asharp sensitivity | Flow = 15 Hz, 10 Hz, 5 Hz | 
+| 1 (CE40hA+, CE20hA+, LI) | 5a (CE40hA+, ET-D, LI) | 7   (CE40hA+, CE20hA+, ET-D)
+| 2 (CE40hAL, CE20hAL, LI) | 5b (CE40hAL, ET-D, LI) | 8a  (CE40hA+, ET-D) 
+| 3 (CE40lA+, CE20lA+, LI) | 6a (CE40lA+, ET-D, LI) | 8b  (CE40hA+, ET-2Ls) 
+| 4 (CE40lAL, CE20lAL, LI) | 6b (CE40lA+, ET-D, LI) | 9ab (LH, LL, LI) at A+ and A# sensitivity
+
+- CE40 and CE20 denote Cosmic Explorer detectors with 40Km and 20Km arm length, respectively. h/l refer to the circulating laser power (high 1.5 MW, low 1.0 MW). A+/AL denote different coating choices. The detectors are located at the same fiducial sites as the MPSAC studies. We consider low-frequency cutoffs of 7, 10 and 15Hz.
+- ET-D refers to Einstein Telescope in its triangular configuration, located in the Mediterranean. ET-2Ls refers to Einstein Telescope in its 2L configuration, with detectors located in Sardinia and Meuse-Rhine. We consider a low-frequency cutoff of 5Hz.
+- LH, LL, and LI denote LIGO Hanford, LIGO Livingston and LIGO-India detectors. LI is always considered at A+ sensitivity, except for the 9ab networks where we compare A+ and A# sensitivities for all three detectors. The low-frequency cutoff is 15Hz. 
 
 ## Location for CE and ET
 - [MPSAC Document](https://dcc.cosmicexplorer.org/public/0163/T2300003/002/CE_Detectors_for_MPSAC.pdf)
