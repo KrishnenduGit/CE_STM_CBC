@@ -4,7 +4,7 @@
 
 | Population Type | Location | Comments |
 |-------------------------|---------------------------|---------------------------|
-| Stellar mass BHs, NSBH, BNS | https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/stellar_mass/data/pop1 | Scripts are availble from [here](https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/full_stellar_mass_pop) |
+| Stellar mass BHs, NSBH, BNS | steall mass BBHs, BNSs, NSBHs [here](https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/full_stellar_mass_pop) |  |
 | popIII | [pop3](https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/pop3) | |
 | pBH | [pbh](https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/pbh) | |
 | IMBBHs | [imbhs](https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/imbhs) | |
