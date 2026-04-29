@@ -21,7 +21,7 @@
 
 - CE40 and CE20 denote Cosmic Explorer detectors with 40Km and 20Km arm length, respectively. h/𝓵 refer to the circulating laser power (high 1.5 MW, low 1.0 MW). A+/AL denote different coating choices. The detectors are located at the same fiducial sites as the MPSAC studies. We consider low-frequency cutoffs of 7, 10 and 15Hz.
 - ET-D refers to Einstein Telescope in its triangular configuration, located in the Mediterranean. ET-2Ls refers to Einstein Telescope in its 2L configuration, with detectors located in Sardinia and Meuse-Rhine. We consider a low-frequency cutoff of 5Hz.
-- LH, LL, and LI denote LIGO Hanford, LIGO Livingston and LIGO-India detectors. LI is always considered at A+ sensitivity, except for the 9ab networks where we compare A+ and A# sensitivities for all three detectors. The low-frequency cutoff is 15Hz. 
+- LH, LL, and LI denote LIGO Hanford, LIGO Livingston and LIGO-India detectors. LI is always considered at A+ sensitivity, except for the 9ab networks where we compare A+ and A# sensitivities for all three detectors. The low-frequency cutoff is 10Hz. 
 
 ## Location for CE and ET
 - [MPSAC Document](https://dcc.cosmicexplorer.org/public/0163/T2300003/002/CE_Detectors_for_MPSAC.pdf)
