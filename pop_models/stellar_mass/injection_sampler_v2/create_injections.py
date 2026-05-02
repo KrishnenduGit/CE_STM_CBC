@@ -198,8 +198,22 @@ for cbc_type, cbc_dict in zip(['BBH', 'NSBH', 'BNS'], [bbh_samples, nsbh_samples
     except Exception:
         logging.warning('spin-parameters not provided, using defaults')
         spin_params = {}
-    s = Spin(spin_model=spin_model, number_of_samples=n_samples_cbc[cbc_type], parameters=spin_params)
-    spin_samples = s.sample()
+    if spin_model.lower() == 'custom':
+        from spin_sampler import sample_gwpop_gaussian_component
+        a_1, a_2, cos_tilt_1, cos_tilt_2 = sample_gwpop_gaussian_component(n_samples_cbc[cbc_type], spin_params)
+        phi_12 = bilby.gw.prior.Uniform(name="phi_12", minimum=0, maximum=2 * np.pi, boundary="periodic")
+        phi_jl = bilby.gw.prior.Uniform(name="phi_jl", minimum=0, maximum=2 * np.pi, boundary="periodic")
+
+        spin_samples = {}
+        spin_samples['a_1'] = a_1
+        spin_samples['a_2'] = a_2
+        spin_samples['tilt_1'] = np.arccos(cos_tilt_1)
+        spin_samples['tilt_2'] = np.arccos(cos_tilt_2)
+        spin_samples["phi_12"] = phi_12.sample(n_samples_cbc[cbc_type])
+        spin_samples["phi_jl"] = phi_jl.sample(n_samples_cbc[cbc_type])
+    else:
+        s = Spin(spin_model=spin_model, number_of_samples=n_samples_cbc[cbc_type], parameters=spin_params)
+        spin_samples = s.sample()
     cbc_dict.update(spin_samples)
 
 #####################################################################################################
@@ -275,7 +289,7 @@ file_naming_strs = {'madaudickinson':'MD',
                     'isotropicbilby':'IB',
                     'gaussiannonspinning':'GNS',
                     'nonspinning':'NS',
-                    'isotropicbetagaussianuniform':'IBGU',
+                    'custom':'custom',
                     'alignedgaussianuniform':'AGU'}
 
 def get_model_str(param_section, param_option):
