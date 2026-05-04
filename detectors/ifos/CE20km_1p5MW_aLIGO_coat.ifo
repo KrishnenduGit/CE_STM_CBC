@@ -1,4 +1,4 @@
-name = 'CE20lA+'
+name = 'CE20km_1p5MW_aLIGO_coat'
 minimum_frequency = 5.0
 maximum_frequency = 4096.0
 length = 20.0
@@ -9,4 +9,4 @@ xarm_azimuth = 200.00000000
 yarm_azimuth = 290.00000000
 xarm_tilt = 0.00000000
 yarm_tilt = 0.00000000
-power_spectral_density_file = '../psds/CE20km_1p0MW_Aplus_coat_strain.txt'
+power_spectral_density_file = '../psds/CE20km_1p5MW_aLIGO_coat_strain.txt'
