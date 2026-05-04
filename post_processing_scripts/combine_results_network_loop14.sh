@@ -51,7 +51,7 @@ python combine_results_network.py \
     --popname "${POP}" \
     --catalog_path "/home/lreali1/scr16_berti/luca/stm_cbc_runs/${POP}s" \
     --base_path "/home/lreali1/scr16_berti/luca/stm_cbc_runs/${POP}s/single_detectors" \
-    --out_path "/home/lreali1/scr16_berti/luca/stm_cbc_runs/${POP}s/networks" \
+    --out_path "/home/lreali1/scr16_berti/luca/stm_cbc_runs/${POP}s/networks/networks14" \
     --snr_th 10.0 
 
 echo "Task $TASK_ID complete!"
