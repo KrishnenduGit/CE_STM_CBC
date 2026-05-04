@@ -1,0 +1,12 @@
+name = 'ETD'
+minimum_frequency = 1.0
+maximum_frequency = 4096.0
+length = 10
+latitude = 43.72237600
+longitude = 9.47548300
+elevation = 0.0
+xarm_azimuth = 330.00000000
+yarm_azimuth = 30.00000000
+xarm_tilt = 0.00000000
+yarm_tilt = 0.00000000
+power_spectral_density_file = '../psds/ET_cryo_10km_asd.txt'

@@ -1,0 +1,12 @@
+name = 'ETSL'
+minimum_frequency = 1.0
+maximum_frequency = 4096.0
+length = 15.0
+latitude = 40.51666667
+longitude = 9.41666667
+elevation = 0.0
+xarm_azimuth = 0.00000000
+yarm_azimuth = 90.00000000
+xarm_tilt = 0.00000000
+yarm_tilt = 0.00000000
+power_spectral_density_file = '../psds/ET_cryo_15km_asd.txt'

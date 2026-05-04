@@ -1,0 +1,12 @@
+name = 'LLA+'
+minimum_frequency = 5.0
+maximum_frequency = 4096.0
+length = 4.0
+latitude = 30.56300000
+longitude = -90.77400000
+elevation = 0.0
+xarm_azimuth = 197.71636956
+yarm_azimuth = 287.71636956
+xarm_tilt = 0.00000000
+yarm_tilt = 0.00000000
+power_spectral_density_file = '../psds/AplusDesign.txt'
