@@ -1,0 +1,1 @@
+{"ETSL": {"lat": 40.516666666666666, "long": 9.416666666666666, "xax": 45.0, "shape": "L", "psd_path": "../psds/ET_cryo_15km_asd.txt"}, "ETMRL45d": {"lat": 50.723055555555554, "long": 5.920555555555556, "xax": 90.0, "shape": "L", "psd_path": "../psds/ET_cryo_15km_asd.txt"}}
