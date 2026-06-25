@@ -54,6 +54,25 @@ GWlatex_labels = {
     "matched_filter_snr": r"$\rho_{\mathrm{MF}}$",
     "optimal_snr": r"$\rho_{\mathrm{opt}}$",}
 
+GWlatex_labels.update({
+    'snr': r'$\rho$',
+    'sky_area_90': r'$\Delta\Omega_{90}\ [\mathrm{deg}^2]$',
+    'delta_chirp_mass': r'$\Delta\mathcal{M}\ [M_\odot]$',
+    'delta_chirp_mass_fractional': r'$\Delta\mathcal{M}/\mathcal{M}$',
+    'delta_luminosity_distance': r'$\Delta d_L\ [\mathrm{Gpc}]$',
+    'delta_luminosity_distance_fractional': r'$\Delta d_L / d_L$',
+    'delta_symmetric_mass_ratio': r'$\Delta\eta$',
+    'delta_theta_jn': r'$\Delta\iota\ [\mathrm{rad}]$',
+    'delta_ra': r'$\Delta\alpha\ [\mathrm{rad}]$',
+    'delta_dec': r'$\Delta\delta\ [\mathrm{rad}]$',
+    'delta_psi': r'$\Delta\Psi\ [\mathrm{rad}]$',
+    'delta_geocent_time': r'$\Delta t_c\ [\mathrm{s}]$',
+    'delta_phase': r'$\Delta\phi\ [\mathrm{rad}]$',
+    'delta_chi_1': r'$\Delta\chi_1$',
+    'delta_chi_2': r'$\Delta\chi_2$',
+    'delta_lambda_tilde': r'$\Delta\tilde{\Lambda}$',
+    'delta_delta_lambda_tilde': r'$\Delta\delta\tilde{\Lambda}$',
+})
 
 def create_custom_colormap(colors):
     """Create a custom colormap from a list of colors.
