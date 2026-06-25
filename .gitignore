@@ -1,5 +1,63 @@
-*.DS_Store
+# Compiled files
+*.pyc
+__pycache__
+*.a
+*.o
+*.so
 
+# Other generated files
+*.ipynb_checkpoints
+*.h5
+*.h5.old
+*.err
+*.out
+*.log
+MANIFEST
+*.png
+
+# Mac OSX
+.DS_Store
+
+# Packages/installer info
+*.egg
+*.egg-info
+dist
+build
+eggs
+.eggs
+
+# Sphinx
+docs/api
+docs/_build
+
+# Eclipse editor project files
+.project
+.pydevproject
+.settings
+
+# Pycharm editor project files
+.idea
+
+# Visual Studio Code files
+.vscode
+
+# Floobits project files
+.floo
+.flooignore
+
+# uv files
+uv.lock
+
+# LATEX (make it to be forced)
+out.tex
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
 *.pdf
-
+gitID.txt
+*.synctex.gz
 *.png
