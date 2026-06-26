@@ -1,0 +1,42 @@
+name: cbc-stm
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+
+  - numpy
+  - scipy
+  - fftw
+  - gsl
+
+  - lalsuite=7.26
+  - lalsimulation-data=6.2.0
+  - liblalframe
+  - ldas-tools-framecpp
+  - metaio
+  - framel
+  - gwpy
+  - pyseobnr=0.3.6
+
+  - bilby=2.8.0
+  - pycbc
+  - dynesty
+  - emcee
+
+  - joblib
+  - pesummary
+  - palettable
+  - adjusttext
+  - rich
+  - seaborn=0.13.2
+
+  - jupyterlab
+  - ipykernel
+  - black
+
+  - compilers
+
+  - zlib
+  - git
