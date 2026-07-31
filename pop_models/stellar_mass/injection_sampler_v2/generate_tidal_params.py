@@ -186,7 +186,7 @@ def add_lambdas(samples, calc, mapping):
     return samples
 
 if __name__ == "__main__":
-    eos_dir = "/ligo/home/ligo.org/shiksha.pandey/tidal_priors/stm/sfho_compose_files/"
+    eos_dir = "/ligo/home/ligo.org/sanika.khadkikar/Projects/stm/post_processing_ns/CE_STM_CBC/pop_models/stellar_mass/injection_sampler_v2/sfho_compose_files/"
     calc = LambdaCalculator(eos_dir)
     print(f"SFHo Max Mass: {calc.eos_max_mass:.4f}")
     

@@ -57,7 +57,12 @@ out.tex
 *.fls
 *.log
 *.out
-*.pdf
 gitID.txt
 *.synctex.gz
-*.png
+
+#EoS files
+pop_models/stellar_mass/injection_sampler_v2/sfho_compose_files/eos.compo
+pop_models/stellar_mass/injection_sampler_v2/sfho_compose_files/eos.micro
+pop_models/stellar_mass/injection_sampler_v2/sfho_compose_files/eos.thermo
+pop_models/stellar_mass/injection_sampler_v2/sfho_compose_files/eos.zip
+sfho_p_e_geom*.txt
