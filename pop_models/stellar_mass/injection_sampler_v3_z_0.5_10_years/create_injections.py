@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import custom samplers
 from redshift_sampler import generate_redshift_samples
-from generate_tidal_params import LambdaCalculator, add_lambdas
+from generate_tidal_params_correct import LambdaCalculator, add_lambdas
 
 # Argument Parsing
 parser = argparse.ArgumentParser(

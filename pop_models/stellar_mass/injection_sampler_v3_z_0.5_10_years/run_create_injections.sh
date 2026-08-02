@@ -4,7 +4,7 @@ conda activate spe_ngloc_mygwf_mypycbc
 OUT_DIR="./"
 OUT_FILE_PREFIX="pop"
 OUT_FILE_SUFFIX="v3_z_0.5_10_years"
-EOS_DIR="/home/divyajyoti/ACADEMIC/Projects/CE_STM/CBC/data/eos_dir"
+EOS_DIR="./sfho_compose_files"
 CONFIG_FILE="config_pop_v3_10_years.ini"
 
 python create_injections.py \
