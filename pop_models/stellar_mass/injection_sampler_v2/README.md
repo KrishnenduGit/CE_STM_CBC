@@ -1,1 +1,1 @@
-The tidal sampler here was corrected after the initial population was created. Hence the BNS and NSBH .h5 files have wrong tidal parameters. 
+The tidal sampler here was corrected after the initial population was created. Hence the BNS and NSBH .h5 files have wrong tidal parameters. These were corrected in post-processing in the [pop_gwfast_format](https://github.com/KrishnenduGit/CE_STM_CBC/tree/main/pop_models/stellar_mass/injection_sampler_v2/pop_gwfast_format) folder
