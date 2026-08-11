@@ -5,7 +5,7 @@ from scipy.integrate import solve_ivp
 from scipy.interpolate import PchipInterpolator
 from bilby.gw.eos.tov_solver import IntegrateTOV
 
-# bilby's default rel_err=1e-4 is under-converged and makes Lambda non-monotonic; 1e-6 gives 0 violations at 2.7x cost.
+# bilby's default rel_err=1e-4 is under-converged and makes Lambda non-monotonic
 TOV_RTOL = 1e-6
 TOV_ATOL = 0.0
 
@@ -148,6 +148,7 @@ class LambdaCalculator:
         self.mmin = mmin
         self.interp = None
         self.eos_max_mass = self.fam.maximum_mass
+        self.eos_max_mass = np.floor(self.fam.maximum_mass * 100.0) / 100.0
 
         if method == "interp":
             # PCHIP is shape preserving, so it cannot overshoot between TOV nodes.
@@ -213,5 +214,5 @@ if __name__ == "__main__":
     calc = LambdaCalculator(eos_dir)
     print(f"SFHo Max Mass: {calc.eos_max_mass:.4f}")
 
-    test_m = [1.4, 2.05, 2.1, 2.5]
+    test_m = [1.4, 2.05, 2.06001, 2.2]
     print(f"Test {test_m} -> {calc.get_lambda(test_m)}")
