@@ -1,0 +1,12 @@
+# Forecast output directories (forecast_mass_redshift_out/, spectral_sirens_out/, ...)
+*_output/
+
+# Cached covariances and sampler artefacts
+*.npz
+*.pickle
+*.hdf5
+*.h5
+
+# Figures -- *.png is already ignored at the repo root, PDFs are not
+*.pdf
+*.png
