@@ -1,5 +1,6 @@
 """
-validate_pop_fisher.py  –  Population Fisher evaluation (Gair+2022).
+redshift_forecast.py  -  Population Fisher for a Madau-Dickinson redshift model
+(Gair+2022).
 
 Runs the population Fisher for a Madau-Dickinson redshift model on a gwfast
 catalogue and turns the resulting hyperparameter covariance into two figures:
@@ -15,35 +16,14 @@ import numpy, pandas, argparse
 logging.basicConfig(level=logging.WARNING, format='%(levelname)s - %(message)s')
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
-# ===========================================================================
-# Imports
-# ===========================================================================
-
 from load import load_population_catalogue
 from plot_utils import plot_corner, plot_redshift_distribution
 from pop_models import MadauDickinsonRedshift
-from pop_fisher import compute_pop_fisher, compute_pop_fisher_full
+from pop_fisher import compute_pop_fisher_full
 
 # ===========================================================================
 # Runners
 # ===========================================================================
-
-def run_term_I_only(model, file_path, snr_threshold, fixed_params=None):
-    print('\n' + '=' * 72)
-    print('  Term I only  (Gamma_I approximation)')
-    print('=' * 72)
-
-    catalogue = load_population_catalogue(
-        file_path, snr_threshold=snr_threshold, with_fisher=False
-    )
-    result = compute_pop_fisher(
-        model, catalogue.events,
-        n_total=catalogue.number_total,
-        fixed_parameters=fixed_params or {},
-    )
-    print(result.summary())
-    return result
-
 
 def run_all_terms(model, file_path, snr_threshold, fixed_params=None):
     print('\n' + '=' * 72)
@@ -126,7 +106,7 @@ args.add_argument('--snr-thresholds', type=float, nargs='+', default=[10, 20, 30
 args = args.parse_args()
 # Effective Madau-Dickinson parameters of the injected population, from a
 # maximum-likelihood fit of the MD form to the catalogue's 34166 injected
-# redshifts (see `infer_time_delay.fit_madau_dickinson_to_samples`).
+# redshifts.
 #
 # alpha + beta = kappa
 # Fit gives (gamma, kappa, z_peak) = (1.881, 5.364, 1.818)

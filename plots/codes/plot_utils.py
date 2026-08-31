@@ -97,6 +97,10 @@ GWlatex_labels.update(
         "lambda_peak": r"$\lambda_{\mathrm{peak}}$",
         "mu_m": r"$\mu_{m} [M_{\odot}]$",
         "sigma_m": r"$\sigma_{m} [M_{\odot}]$",
+        # Cosmology (spectral sirens)
+        "H0": r"$H_{0}\ [\mathrm{km/s/Mpc}]$",
+        "Om": r"$\Omega_{m}$",
+        "w0": r"$w_{0}$",
         # Broken power law + two peaks
         "alpha_1": r"$\alpha_{1}$",
         "alpha_2": r"$\alpha_{2}$",

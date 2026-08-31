@@ -8,7 +8,7 @@ Models
   form is for the redshift sector.  The fiducial is obtained by a maximum-
   likelihood fit of BGP to the *injected* component masses.
 * Redshift: ``pop_models.MadauDickinsonRedshift``, at the effective MD
-  parameters of the injected redshifts (from ``validate_pop_fisher.py``).
+  parameters of the injected redshifts.
 * Joint: ``pop_models.JointModel(BGP, MD)``.
 
 Fixed vs free
@@ -44,14 +44,13 @@ from pop_models import (
     BrokenPowerLawPlusTwoPeaksMass,
     JointModel,
     MadauDickinsonRedshift,
-    _broken_power_law_shape,
-    _smoothing_window,
+    _normalisation_grid,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 
-# Effective MD parameters of the injected redshifts, from the maximum-likelihood
-# fit documented in validate_pop_fisher.py (alpha + beta = kappa = 5.364).
+# Effective MD parameters from the maximum-likelihood fit to the injected
+# redshifts (alpha + beta = kappa = 5.364).
 MD_FIDUCIAL = {"alpha": 1.881, "beta": 3.483, "z_peak": 1.818}
 
 # BGP parameters pinned in the Fisher (the discontinuous / support ones).
@@ -67,23 +66,18 @@ MASS_FREE_NAMES = [
 # ===========================================================================
 
 
-def fit_bgp_to_samples(mass_1, mass_2, m_min, m_max):
+def fit_bgp_to_samples(mass_1, mass_2, m_min_upper, m_max):
     """
     Maximum-likelihood BGP parameters for a set of injected component masses.
-
-    Maximises ``mean_i ln p(m1_i, m2_i | params)`` with ``p`` the full
-    ``BrokenPowerLawPlusTwoPeaksMass`` density (a density in (m1, m2)), over the
-    eleven smooth parameters, holding the support edges ``m_min, m_max`` fixed.
-    The three mixture weights are parametrised through a softmax of two free
-    variables so ``lambda_0, lambda_1, lambda_2`` always form a valid simplex
-    (keeps the finite-difference scores finite).
 
     Parameters
     ----------
     mass_1, mass_2 : (N,) ndarray
         Injected source-frame component masses.
-    m_min, m_max : float
-        Fixed support edges.
+    m_min_upper : float
+        Upper bound for the fitted ``m_min``; must be below ``mass_2.min()``.
+    m_max : float
+        Fixed upper support edge.
 
     Returns
     -------
@@ -100,11 +94,9 @@ def fit_bgp_to_samples(mass_1, mass_2, m_min, m_max):
     }
     model = BrokenPowerLawPlusTwoPeaksMass()
 
-    # Fitted vector: alpha_1, alpha_2, m_break, w0, w1, mu_1, sigma_1, mu_2,
-    # sigma_2, beta_q, delta_m.  (w0, w1) -> (lambda_0, lambda_1) via softmax.
     def unpack(vector):
         (alpha_1, alpha_2, m_break, w0, w1, mu_1, sigma_1,
-         mu_2, sigma_2, beta_q, delta_m) = vector
+         mu_2, sigma_2, beta_q, delta_m, m_min) = vector
         weights = numpy.exp(numpy.array([w0, w1, 0.0]))
         weights /= weights.sum()
         return {
@@ -120,27 +112,29 @@ def fit_bgp_to_samples(mass_1, mass_2, m_min, m_max):
             return 1e12
         return -float(numpy.mean(log_prob))
 
-    # Start: one narrow low-mass peak (the dominant ~9 Msun feature), one broad
-    # high-mass peak (~35), a moderately steep power law and a slight mass-ratio
-    # preference for equal masses.
-    initial_guess = [2.0, 4.0, 30.0, 0.0, -0.5, 9.0, 1.5, 35.0, 8.0, 1.4, 1.0]
+    m_min_lower = 0.5 * m_min_upper
+    initial_guess = [
+        2.0, 4.0, 30.0, 1.5, -0.5, 9.0, 1.5, 35.0, 8.0, 1.4, 1.0,
+        0.98 * m_min_upper,
+    ]
     bounds = [
-        (-10.0, 10.0),                # alpha_1
-        (-10.0, 10.0),                # alpha_2
-        (1.2 * m_min, 0.9 * m_max),   # m_break
-        (-15.0, 15.0),                # w0
-        (-15.0, 15.0),                # w1
-        (m_min, m_max),               # mu_1
-        (0.3, 40.0),                  # sigma_1
-        (m_min, m_max),               # mu_2
-        (0.3, 40.0),                  # sigma_2
-        (-4.0, 8.0),                  # beta_q
-        (0.05, 20.0),                 # delta_m
+        (-10.0, 10.0),                       # alpha_1
+        (-10.0, 10.0),                       # alpha_2
+        (1.2 * m_min_upper, 0.9 * m_max),    # m_break
+        (-15.0, 15.0),                       # w0
+        (-15.0, 15.0),                       # w1
+        (m_min_lower, m_max),                # mu_1
+        (0.3, 40.0),                         # sigma_1
+        (m_min_lower, m_max),                # mu_2
+        (0.3, 40.0),                         # sigma_2
+        (-4.0, 8.0),                         # beta_q
+        (1e-3, 20.0),                        # delta_m
+        (m_min_lower, m_min_upper),          # m_min
     ]
     result = minimize(
         negative_log_likelihood,
         initial_guess,
-        method="L-BFGS-B",
+        method="L-BFGS-B", # dual_annealing
         bounds=bounds,
         options=dict(maxiter=3000, ftol=1e-12),
     )
@@ -148,21 +142,15 @@ def fit_bgp_to_samples(mass_1, mass_2, m_min, m_max):
 
 
 def primary_mass_density(mass_grid, fiducial):
-    """BGP marginal p(m1) on ``mass_grid``, normalised, for the fit-check plot."""
-    bp = _broken_power_law_shape(
-        mass_grid, fiducial["alpha_1"], fiducial["alpha_2"],
-        fiducial["m_break"], fiducial["m_min"], fiducial["m_max"],
+    model = BrokenPowerLawPlusTwoPeaksMass()
+    density, _ = model._primary_numerator(mass_grid, fiducial, derivatives=False)
+    grid = _normalisation_grid(
+        fiducial["m_min"], fiducial["m_max"], fiducial["delta_m"],
+        fiducial["m_break"],
     )
-    g1 = numpy.exp(-0.5 * ((mass_grid - fiducial["mu_1"]) / fiducial["sigma_1"]) ** 2)
-    g2 = numpy.exp(-0.5 * ((mass_grid - fiducial["mu_2"]) / fiducial["sigma_2"]) ** 2)
-    lambda_2 = 1.0 - fiducial["lambda_0"] - fiducial["lambda_1"]
-    shape = (
-        fiducial["lambda_0"] * bp
-        + fiducial["lambda_1"] * g1
-        + lambda_2 * g2
-    ) * _smoothing_window(mass_grid, fiducial["m_min"], fiducial["delta_m"])
-    norm = numpy.trapz(shape, mass_grid)
-    return shape / norm if norm > 0 else shape
+    reference, _ = model._primary_numerator(grid, fiducial, derivatives=False)
+    norm = numpy.trapz(reference, grid)
+    return density / norm if norm > 0 else density
 
 
 # ===========================================================================
@@ -390,13 +378,16 @@ def main(argv=None):
     # 1. Fiducial from the injected masses; support edges from the data range.
     mass_1, mass_2 = load_injected_masses(args.fisher_file)
     minimum_component = float(min(mass_1.min(), mass_2.min()))
-    m_min = 0.99 * minimum_component          # below the smoothing zero at m_min
+    m_min_upper = 0.999 * minimum_component
     m_max = 1.001 * float(mass_1.max())       # bracket the heaviest primary
     logging.info(
         f"Injected masses: {len(mass_1)} injections, "
-        f"m_min set to {m_min:.3f}, m_max set to {m_max:.3f}"
+        f"m_min fitted below {m_min_upper:.3f}, m_max set to {m_max:.3f}"
     )
-    mass_fiducial, fit_result = fit_bgp_to_samples(mass_1, mass_2, m_min, m_max)
+    mass_fiducial, fit_result = fit_bgp_to_samples(
+        mass_1, mass_2, m_min_upper, m_max
+    )
+    logging.info(f"Fitted m_min = {mass_fiducial['m_min']:.4f}")
     logging.info("Effective BGP fiducial: " + ", ".join(
         f"{name}={mass_fiducial[name]:.4g}" for name in MASS_FREE_NAMES
     ))

@@ -1,43 +1,45 @@
 # Population Fisher forecasts
 
-Running the scripts is pretty straightforward.
+Hyperparameter (population) Fisher matrices for CE/ET catalogues, following
+Gair et al. 2022 ([arXiv:2205.07893](https://arxiv.org/abs/2205.07893)) Eq. 21.
 
-For example, if you just want to get Fisher errors for the Madau--Dickinson population, you can start with:
+The Term-I score is always the model's closed-form `analytic_score` (no
+finite-difference fallback).  Finite differences remain only where no closed
+form exists: the `Om`/`w0` columns of the spectral-siren score, and the
+Terms II-V machinery in `pop_fisher_higher_order.py`.
 
-```python
-python redshift_forecast.py --help
+Every script takes `--fisher-file`, defaulting to the CE40+CE20+ET catalogue in
+this directory, and `--help` works everywhere.
+
+## Forecasts
+
+```bash
+# Madau-Dickinson redshift only.  All five Gair terms, and it reports how much
+# each one contributes.  Writes its figures to the current directory.
+python redshift_forecast.py
+
+# Mass + redshift.  Term I only, so it is directly comparable to a Bayesian run
+# with an injected value.  -> forecast_mass_redshift_output/
+python forecast_mass_redshift.py
+
+# Spectral sirens: population + (H0, Om, w0) in the detector frame, plus a
+# measurement-error bracket on sigma(H0).  -> spectral_sirens_output/
+python spectral_sirens_forecast.py
 ```
 
-The script expects a Fisher results file, which you can provide with:
+`--output-directory`, `--snr-thresholds`, `--n-samples` and `--seed` are
+available on the latter two.
 
-```python
-python validate_pop_fisher.py --fisher-file network_bbh_CE40km_1p5MW_Aplus_coat_5.0hz_CE20km_1p5MW_Aplus_coat_5.0hz_ETD_5.0hz.h5
+## Checks
+
+```bash
+python validate_gwtc5_model.py      # the mass model against GWTC-5 B10-B14
+python validate_analytic_scores.py  # analytic scores against the validators' own FD reference
 ```
 
-This spits out the relevant numbers and generates some nice plots. This calculation includes all terms in the Population Fisher matrix and also calculates the relative contribution of each term.
+## The mass model, and one convention that matters
 
-Similarly, if you are interested in a mass + redshift forecast, simply run:
-
-```python
-python forecast_mass_redshift.py --fisher-file network_bbh_CE40km_1p5MW_Aplus_coat_5.0hz_CE20km_1p5MW_Aplus_coat_5.0hz_ETD_5.0hz.h5
-```
-
-This one only calculates the first Fisher term and ignores all higher-order corrections. So, by construction, it is equivalent to Sylvia's Bayesian runs with an injected value 🤷
-
-The generated results are saved in an output directory, which by default is:
-
-```text
-forecast_mass_redshift_output/
-```
-
-Again, beautiful plots come for free!
-
-Finally, for the spectral siren forecast, you can do the same thing:
-
-```python
-python spectral_sirens_forecast.py --fisher-file network_bbh_CE40km_1p5MW_Aplus_coat_5.0hz_CE20km_1p5MW_Aplus_coat_5.0hz_ETD_5.0hz.h5
-```
-There is also another directory created for you with beautiful plots and results.
-
-
-You will need a few packages here and there, but overall it is fast and largely good!!!
+`BrokenPowerLawPlusTwoPeaksMass` implements GWTC-5
+([arXiv:2605.27226](https://arxiv.org/abs/2605.27226)) Eqs. B10-B14: a broken
+power law plus two left-truncated Gaussians, with the Planck taper applied to
+both component masses.

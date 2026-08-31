@@ -20,7 +20,6 @@ import logging, numpy
 from dataclasses import dataclass, field
 
 from load import POPULATION_KEYS, _default_cosmology
-from pop_fisher_term_I import _FreeParamWrapper  # noqa: F401  (re-exported)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -39,24 +38,13 @@ def compute_det_score(events, snr, snr_threshold, sigma_rho=1.0, p_det_min=1e-3)
 
         rho_opt ∝ Mc_det^{5/6}(1+z)^{5/6} / d_L(z)
 
-    Numerically stable derivation
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    With  x_k = (rho_th - rho_k) / (sqrt(2) sigma_rho)  and
-    p_det = 0.5 erfc(x_k):
+    With x = (rho_th - rho) / (sqrt(2) sigma_rho) and p_det = 0.5 erfc(x),
 
-        dp_det / d rho = exp(-x^2) / (sqrt(2 pi) sigma_rho)
+        d ln p_det / d rho = 2 / (sqrt(2 pi) sigma_rho * erfcx(x)),
 
-        d ln p_det / d rho = exp(-x^2) / (sqrt(2 pi) sigma_rho * p_det)
-                           = 2 / (sqrt(2 pi) sigma_rho * erfcx(x))
-
-    where erfcx(x) = exp(x^2) erfc(x) is the scaled complementary error
-    function, which is O(1/x) for large positive x (below threshold) and
-    therefore always finite – no exponential blow-up.
-
-    Note on a common mistake: the standard normal PDF phi(x) = exp(-x^2/2)/sqrt(2pi)
-    is NOT the correct numerator here because x = (rho_th-rho)/(sqrt(2)*sigma_rho)
-    is NOT the standardised variable.  Using phi(x)/p_det diverges exponentially
-    for rho << rho_th.  The correct formula has exp(-x^2), equivalently 1/erfcx(x).
+    where erfcx(x) = exp(x^2) erfc(x) is O(1/x) for large x, so this is always
+    finite.  Beware: phi(x)/p_det with the standard normal PDF is wrong here
+    (x is not the standardised variable) and diverges for rho << rho_th.
 
     Parameters
     ----------
@@ -169,7 +157,7 @@ def _H_theta(model, events, parameters, phys_keys, h_rel=1e-3, h_abs=1e-6):
         ev_minus = dict(events)
         ev_minus[key_a] = val_a - h_a
         # When perturbing a mass, q = m2/m1 is a derived quantity used by
-        # mass population models (e.g. TruncatedPowerLawMass); keep it consistent.
+        # mass population models; keep it consistent.
         if key_a in ('mass_1_source', 'mass_2_source') and 'mass_ratio' in events:
             ev_plus['mass_ratio'] = ev_plus['mass_2_source'] / ev_plus['mass_1_source']
             ev_minus['mass_ratio'] = ev_minus['mass_2_source'] / ev_minus['mass_1_source']
@@ -248,9 +236,8 @@ def _regularised_fisher(fim_sub, reg=1e-10):
     """
     F_eff = FIM + reg * max(diag(FIM)) * I, the regularised per-event Fisher.
 
-    Exposed separately from ``_effective_fisher`` because Term II is evaluated as
-    log det(A) - log det(F_eff): both halves must use the *same* regularised FIM
-    or the identity no longer holds exactly.
+    Term II is evaluated as log det(A) - log det(F_eff), so both halves must use
+    the *same* regularised FIM or the identity no longer holds exactly.
 
     Returns F_eff (N, n, n).
     """
@@ -258,16 +245,6 @@ def _regularised_fisher(fim_sub, reg=1e-10):
     scale = numpy.maximum(diag_fim.max(axis=-1), 1.0) * reg
     eye_block = numpy.eye(fim_sub.shape[-1])[numpy.newaxis, :, :]
     return fim_sub + scale[:, numpy.newaxis, numpy.newaxis] * eye_block
-
-
-def _effective_fisher(fim_sub, hessian, reg=1e-10):
-    """
-    Compute A_k = F_eff_k - H_k with a small diagonal regularisation to
-    avoid singularities when the population Hessian is large.
-
-    Returns A  (N, n, n).
-    """
-    return _regularised_fisher(fim_sub, reg) - hessian
 
 
 def _correction_scalars(fim_eff, hessian, gradient, detection_score=None):
@@ -281,24 +258,12 @@ def _correction_scalars(fim_eff, hessian, gradient, detection_score=None):
 
     where  A_k = F_eff_k - H_k.
 
-    **Why the first two are re-centred**
-        The quantities appearing in Gair+2022 Eq. 21 are log det(A_k) and
-        Tr[A_k^{-1} FIM_k].  Both are dominated by a large, lambda-INDEPENDENT
-        piece when FIM >> H, so finite-differencing them in lambda means taking
-        small differences of large numbers:
-
-            log det(A)     = log det(F_eff) + log det(I - F_eff^{-1} H)
-            Tr[A^{-1} FIM] = n_phys + Tr[A^{-1} H] - reg * Tr[A^{-1}]
-
-        Subtracting log det(F_eff) and n_phys costs nothing -- they vanish under
-        d^2/dlambda^2 -- but leaves an O(H/FIM) quantity that finite-differences
-        cleanly.  This is what allows all four terms to share one FD path
-        (see ``_hessians_correction_terms_fd``) instead of needing the matrix
-        identities and an explicit d^2H/dlambda^2, which finite differences
-        cannot deliver at usable accuracy.
-
-        The residual reg * Tr[A^{-1}] in the trace identity is O(1e-10 * n_phys)
-        and is dropped.
+    The first two are re-centred (log det(F_eff) and n_phys subtracted, which
+    vanish under d^2/dlambda^2) because Eq. 21's raw log det(A) and
+    Tr[A^{-1} FIM] are dominated by a large lambda-independent piece when
+    FIM >> H; differencing the O(H/FIM) remainder instead is what lets all four
+    terms share one FD path.  The residual reg * Tr[A^{-1}] is O(1e-10) and
+    dropped.
 
     Parameters
     ----------
@@ -363,44 +328,18 @@ def _hessians_correction_terms_fd(
 ):
     """
     Compute the (N_free, N_free, N_events) second-derivative tensors for all
-    four correction-term building blocks of Gair+2022 Eq. 21.
+    four correction-term building blocks of Gair+2022 Eq. 21, by centred finite
+    differences in lambda (3-point diagonal, 4-point off-diagonal), with
+    H_theta and P_theta rebuilt by theta-FD at each lambda sample.  Re-centring
+    the scalars (see ``_correction_scalars``) is what makes one FD path work
+    for all four terms.
 
-    Numerical strategy
-    ------------------
-    All four scalars are differentiated the same way: centred finite differences
-    in lambda (3-point on the diagonal, 4-point off-diagonal), with H_theta and
-    P_theta rebuilt by theta-finite-differences at each lambda sample.
-
-    Terms II and III used to take a separate route through exact matrix-calculus
-    identities, because a direct FD of log det(A) or Tr[A^{-1} FIM] cancels
-    catastrophically when FIM >> H.  That route needs d^2 H / dlambda^2, which
-    finite differences cannot supply usefully -- it is an FD of an FD, so
-    roundoff is amplified by 1/h_theta^2 * 1/h_lam^2.  Dropping it instead lost
-    the dominant O(H/FIM) contribution and left only the sub-leading
-    O((H/FIM)^2) piece, so both options were wrong.
-
-    Re-centring the scalars (see ``_correction_scalars``) removes the
-    cancellation algebraically, so the well-behaved scalar FD path already used
-    for terms IV and V now serves all four.
-
-    **Choice of h_lam (default 3e-2, not 1e-4)**
-        H_theta is itself a theta-finite-difference, so it carries a roundoff
-        floor of order eps*|ln p| / h_theta^2.  The re-centred scalars are
-        O(H/FIM), i.e. very small, so that floor propagates into them and the
-        lambda-second-difference then divides it by h_lam^2.  With h_lam = 1e-4
-        the noise swamps the signal for every hyperparameter whose scalar
-        dependence is weak: comparing against gwfast's JAX tensors, alpha_m and
-        beta_q came out 350x and 2600x too large, and scaled as 1/h_lam^2 --
-        the signature of pure noise.
-
-        The values plateau for h_lam between 1e-2 and 1e-1, agreeing with gwfast
-        to a few percent, so 3e-2 sits in the middle of that plateau.  To re-check
-        this on a new model, recompute a diagonal at h_lam and 3*h_lam: entries
-        that move like 1/h_lam^2 are noise, entries that hold still are signal.
-
-        This step is deliberately decoupled from the ``h_lam`` used for the Term I
-        score in ``compute_pop_fisher``, which is a first derivative of ln p
-        itself (no nested FD, no re-centring) and is well conditioned at 1e-4.
+    **h_lam = 3e-2, not 1e-4, on purpose**: the theta-FD roundoff floor in
+    H_theta propagates into the O(H/FIM) scalars and gets divided by h_lam^2,
+    so at 1e-4 the result is pure noise (350-2600x too large vs gwfast, scaling
+    as 1/h_lam^2).  The values plateau for h_lam in [1e-2, 1e-1], agreeing with
+    gwfast to a few percent.  To re-check on a new model: recompute a diagonal
+    at h_lam and 3*h_lam — entries that move like 1/h_lam^2 are noise.
 
     Parameters
     ----------
@@ -646,35 +585,14 @@ def compute_correction_terms(
 
     Notes
     -----
-    **Monte-Carlo weights for Terms III and IV**
-        Gair+2022 Eq. 21 weights Terms I, II and V by
-        ``P_det(theta) p(theta|lambda) / P_det(lambda)`` but weights Terms III
-        and IV by ``p(theta|lambda) / P_det(lambda)`` only -- the P_det(theta)
-        factor is absent because it is already contained in the detection-
-        restricted noise integrals D_kl and D_l of their Eq. 20.
-
-        This matters because we sum over a *detected catalogue*, whose events
-        are drawn from ``p_det(theta) P(theta|lambda) / P_det(lambda)`` rather
-        than from the full population.  Changing measure,
-
-            int f(theta) p(theta|lambda)/P_det(lambda) dtheta
-                = E_{p_det}[ f(theta) / P_det(theta) ]
-                ~ (1/N) sum_k f(theta_k) / P_det(theta_k),
-
-        so the correct estimator divides by the *per-event* p_det(theta_k), not
-        by the global P_det(lambda) = n_det/n_total.  For a detected catalogue
-        p_det(theta_k) is close to 1, so the two differ by a factor
-        ~1/P_det(lambda).
-
-        Term IV needs no weight at all: the paper's D_l = dP_det(theta)/dtheta
-        equals p_det(theta_k) * d ln p_det(theta_k)/dtheta, and
-        ``compute_det_score`` already returns the log-derivative, so the
-        p_det(theta_k) in D_l cancels the 1/p_det(theta_k) from the change of
-        measure exactly.
-
-        Term III substitutes D_kl -> FIM_kl (the unrestricted noise integral,
-        as gwfast's ``pop_function_hessian_termIII`` also does), which leaves
-        the 1/p_det(theta_k) weight in place.
+    Monte-Carlo weights: summing over a *detected* catalogue (drawn from
+    p_det(theta) p(theta|lambda) / P_det(lambda)) means Terms I, II and V need
+    no explicit weight, while Term III — weighted by p(theta|lambda) /
+    P_det(lambda) in Eq. 21 — picks up a per-event 1/p_det(theta_k) from the
+    change of measure.  Term IV's p_det(theta_k) in D_l cancels that factor
+    exactly (``compute_det_score`` returns the log-derivative).  Term III
+    substitutes D_kl -> FIM_kl, as gwfast's ``pop_function_hessian_termIII``
+    also does.
     """
     number_of_events = len(events[phys_keys[0]])
     number_of_free = len(free_names)

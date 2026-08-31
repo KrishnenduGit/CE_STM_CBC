@@ -1,5 +1,6 @@
-# Forecast output directories (forecast_mass_redshift_out/, spectral_sirens_out/, ...)
-*_output/
+# Forecast output directories (forecast_mass_redshift_output/, spectral_sirens_output/,
+# and any *_output_rerun/ variants)
+*_output*/
 
 # Cached covariances and sampler artefacts
 *.npz

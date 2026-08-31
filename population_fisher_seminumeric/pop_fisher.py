@@ -39,7 +39,6 @@ from load import (
 from pop_fisher_term_I import (
     PopFisherResult,
     _FreeParamWrapper,
-    _numerical_score,
     compute_pop_fisher,
 )
 from pop_fisher_higher_order import (
@@ -192,7 +191,6 @@ def compute_pop_fisher_full(
     fixed_parameters=None,
     n_total=None,
     n_det=None,
-    h_lam=1e-4,
     h_lam_terms=3e-2,
     h_theta=1e-3,
     det_score=None,
@@ -233,11 +231,9 @@ def compute_pop_fisher_full(
         Total injections (P_det denominator; reporting only).
     n_det : int, optional
         Injections above threshold (P_det numerator; reporting only).
-    h_lam : float
-        Relative FD step in lambda-space for the Term I score (default 1e-4).
     h_lam_terms : float
         Relative FD step in lambda-space for the Terms II-V scalars
-        (default 3e-2).  Much larger than ``h_lam`` on purpose; see
+        (default 3e-2); see
         ``pop_fisher_higher_order._hessians_correction_terms_fd``.
     h_theta : float
         Relative FD step in theta-space (default 1e-3).
@@ -331,7 +327,6 @@ def compute_pop_fisher_full(
         params=effective_params,
         fixed_parameters=fixed_parameters,
         n_total=n_total,
-        h_rel=h_lam,
         rcond=rcond,
     )
     fisher_I = result_I.fisher
@@ -414,78 +409,4 @@ def compute_pop_fisher_full(
         n_events=result_I.n_events,
         n_det=n_det,
         n_total=n_total,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Deprecated loaders, kept so that existing notebooks keep importing cleanly
-# ---------------------------------------------------------------------------
-
-# Old gwfast-style event keys -> the bilby-style keys used everywhere now.
-_LEGACY_KEY_ALIAS = {
-    "z": "redshift",
-    "m1_src": "mass_1_source",
-    "m2_src": "mass_2_source",
-    "q": "mass_ratio",
-}
-
-_LEGACY_WARNED = set()
-
-
-def _translate_legacy_keys(keys, caller):
-    if keys is None:
-        return None
-    if caller not in _LEGACY_WARNED:
-        _LEGACY_WARNED.add(caller)
-        logging.warning(
-            f"{caller} is deprecated; use load.load_population_catalogue "
-            f"instead.  Event keys are now {_LEGACY_KEY_ALIAS} -- the returned "
-            f"dict uses the new names."
-        )
-    return [_LEGACY_KEY_ALIAS.get(key, key) for key in keys]
-
-
-def load_events(file_path, snr_threshold, keys=None):
-    """
-    Deprecated.  Use ``load.load_population_catalogue``.
-
-    Returns ``(events, n_det, n_det_thresh, n_total, snr_mask)`` as before,
-    except that ``events`` uses the bilby-style keys and ``snr_mask`` is the
-    analysis mask restricted to the catalogue (it was only ever used to index
-    the H5 file, which the catalogue loader now does itself).
-    """
-    catalogue = load_population_catalogue(
-        file_path,
-        snr_threshold,
-        parameters=_translate_legacy_keys(keys, "load_events"),
-        with_fisher=False,
-    )
-    return (
-        catalogue.events,
-        catalogue.number_detected,
-        catalogue.number_above_threshold,
-        catalogue.number_total,
-        catalogue.snr >= snr_threshold,
-    )
-
-
-def load_events_full(file_path, snr_threshold, keys=None, cosmo=None):
-    """
-    Deprecated.  Use ``load.load_population_catalogue``.
-
-    Returns ``(events, fim_phys, n_det, n_det_thresh, n_total)`` as before,
-    with ``events`` using the bilby-style keys.
-    """
-    catalogue = load_population_catalogue(
-        file_path,
-        snr_threshold,
-        parameters=_translate_legacy_keys(keys, "load_events_full"),
-        cosmology=cosmo,
-    )
-    return (
-        catalogue.events,
-        catalogue.fisher,
-        catalogue.number_detected,
-        catalogue.number_above_threshold,
-        catalogue.number_total,
     )

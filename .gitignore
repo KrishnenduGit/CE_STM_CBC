@@ -7,11 +7,14 @@ __pycache__
 
 # Other generated files
 *.ipynb_checkpoints
-# *.h5
+*.h5
 *.h5.old
 *.err
 *.out
 *.log
+*.hdf5
+*.pdf
+*.npz
 MANIFEST
 *.png
 

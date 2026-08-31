@@ -928,3 +928,105 @@ def load_detector_frame_fisher(file_path, snr_threshold):
         fisher_detector, events, snr,
         number_detected, number_above_threshold, number_total,
     )
+
+
+def load_detector_frame_covariance(file_path, snr_threshold):
+    """
+    Per-event **marginal** measurement covariance in the detector-frame observable
+    basis ``(mass_1_det, mass_2_det, luminosity_distance)``.
+
+    This is the companion to ``load_detector_frame_fisher`` and differs from it in
+    exactly one respect, which matters:
+
+    ``load_detector_frame_fisher`` *slices* the ``(Mc, eta, d_L)`` rows and columns
+    out of the stored 11x11 Fisher, which **conditions** on the eight nuisance
+    directions (inclination, polarisation, sky position, spins, t_c, phi_c) -- it
+    answers "how well is d_L measured if iota were known exactly?".  Here we instead
+    take the corresponding sub-block of the stored 11x11 *covariance*, which is the
+    Schur complement and therefore **marginalises** over those eight directions.
+
+    The distinction is not cosmetic.  On this catalogue the marginal
+    ``sigma(d_L)/d_L`` is 0.038 against 0.026 conditional (the d_L--iota degeneracy),
+    and for the component masses it is far larger still: marginal ``sigma(m1_det)``
+    is 1.35 Msun against 0.017 Msun conditional, because conditioning on ``m2_det``
+    leaves only the very well measured chirp-mass direction.
+
+    Use this whenever the quantity you want is "how well did we actually measure
+    this event", e.g. the ``||H_theta F^-1||`` validity parameter of the Gair+2022
+    small-measurement-error expansion.  There the population log-density has no
+    dependence on the eight nuisance parameters, so ``H_k`` vanishes in those blocks
+    and the product ``H_k F_k^-1`` picks out precisely this marginal sub-block.
+
+    Parameters
+    ----------
+    file_path : str
+    snr_threshold : float
+
+    Returns
+    -------
+    covariance_detector : (N, 3, 3) ndarray
+        Per-event marginal covariance in ``(mass_1_det, mass_2_det, luminosity_distance)``.
+    events : dict
+        Same keys as ``load_detector_frame_fisher``.
+    snr : (N,) ndarray
+    number_detected, number_above_threshold, number_total : int
+    """
+    basis = FisherResults(file_path).fisher_basis_index
+    indices = [basis[key] for key in _DETECTOR_FRAME_KEYS]  # Mc, eta, dL
+    with h5py.File(file_path, "r") as handle:
+        is_detected = handle["is_detected"][:]
+        snr_all = handle["snr"][:]
+        above_threshold = snr_all >= snr_threshold
+        analysis_mask = is_detected & above_threshold
+        number_total = int(is_detected.shape[0])
+        number_above_threshold = int(above_threshold.sum())
+
+        group = handle["event_parameters"]
+        mass_1_source = group["m1_src"][:][analysis_mask]
+        mass_2_source = group["m2_src"][:][analysis_mask]
+        redshift = group["z"][:][analysis_mask]
+        distance = group["dL"][:][analysis_mask]
+        snr = snr_all[analysis_mask]
+
+        if "covariance" in handle:
+            # h5py rejects numpy.ix_ fancy indexing on a dataset, so read then slice.
+            covariance = handle["covariance"][:]  # (11, 11, N_total)
+            sub_block = covariance[numpy.ix_(indices, indices)][
+                :, :, analysis_mask
+            ].transpose(2, 0, 1)
+        else:
+            # No stored covariance: invert the full 11x11 per event, then slice.
+            # (Inverting first and slicing after is what makes this a marginal.)
+            full = handle["fisher"][:][:, :, analysis_mask].transpose(2, 0, 1)
+            sub_block = numpy.linalg.inv(full)[numpy.ix_(
+                numpy.arange(full.shape[0]), indices, indices
+            )]
+
+    number_detected = int(analysis_mask.sum())
+
+    one_plus_z = 1.0 + redshift
+    mass_1_det = mass_1_source * one_plus_z
+    mass_2_det = mass_2_source * one_plus_z
+
+    # jacobian_detector_masses returns d(Mc, eta, dL) / d(m1_det, m2_det, dL).
+    # A covariance transforms with the *inverse* of that (the Fisher transforms
+    # with the forward one) -- getting this backwards silently shrinks the mass
+    # errors by a factor of ~100.
+    jacobian = jacobian_detector_masses(mass_1_det, mass_2_det, distance)
+    inverse_jacobian = numpy.linalg.inv(jacobian)
+    covariance_detector = numpy.einsum(
+        "nia,nab,njb->nij", inverse_jacobian, sub_block, inverse_jacobian
+    )
+
+    events = {
+        "mass_1_det": mass_1_det,
+        "mass_2_det": mass_2_det,
+        "luminosity_distance": distance,
+        "mass_1_source": mass_1_source,
+        "mass_2_source": mass_2_source,
+        "redshift": redshift,
+    }
+    return (
+        covariance_detector, events, snr,
+        number_detected, number_above_threshold, number_total,
+    )
