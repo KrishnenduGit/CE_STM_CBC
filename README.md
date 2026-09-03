@@ -109,5 +109,7 @@ shape = 'Triangle'
 | **Main data products from Stage 3** | Population hyper PE|Population hyper PE|Population hyper PE|Population hyper PE|Population hyper PE|Population hyper PE|
 | **Main data products from Stage 4** | |||||
 
-## Waveform Models Used
+
+## Waveform Models 
+
 Waveform Models: IMRPhenomXPHM for stellar mass BHs (calculating errors on aligned spin parameters), IMRPhenomXAS_NRTidal_v3 for BNS and IMRPhenom_NSBH for NSBHs
