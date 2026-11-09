@@ -2,12 +2,12 @@
 """
 Models
 ------
-* Mass: ``pop_models.BrokenPowerLawPlusTwoPeaksMass`` (BGP).  The catalogue was
+* Mass: ``bgp.BrokenPowerLawPlusTwoPeaksMass`` (BGP).  The catalogue was
   drawn from a much richer "fullpop" model (NS + BH + dip + upper gap + peaks),
   so BGP is an *effective* fit -- exactly as the effective Madau-Dickinson (MD)
   form is for the redshift sector.  The fiducial is obtained by a maximum-
   likelihood fit of BGP to the *injected* component masses.
-* Redshift: ``pop_models.MadauDickinsonRedshift``, at the effective MD
+* Redshift: ``redshift.MadauDickinsonRedshift``, at the effective MD
   parameters of the injected redshifts.
 * Joint: ``pop_models.JointModel(BGP, MD)``.
 
@@ -40,12 +40,9 @@ import pandas
 
 from load import load_injected_masses, load_population_catalogue
 from pop_fisher import compute_pop_fisher
-from pop_models import (
-    BrokenPowerLawPlusTwoPeaksMass,
-    JointModel,
-    MadauDickinsonRedshift,
-    _normalisation_grid,
-)
+from bgp import BrokenPowerLawPlusTwoPeaksMass, _normalisation_grid, primary_mass
+from pop_models import JointModel
+from redshift import MadauDickinsonRedshift
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 
@@ -142,13 +139,12 @@ def fit_bgp_to_samples(mass_1, mass_2, m_min_upper, m_max):
 
 
 def primary_mass_density(mass_grid, fiducial):
-    model = BrokenPowerLawPlusTwoPeaksMass()
-    density, _ = model._primary_numerator(mass_grid, fiducial, derivatives=False)
+    density, _ = primary_mass(mass_grid, fiducial, derivatives=False)
     grid = _normalisation_grid(
         fiducial["m_min"], fiducial["m_max"], fiducial["delta_m"],
         fiducial["m_break"],
     )
-    reference, _ = model._primary_numerator(grid, fiducial, derivatives=False)
+    reference, _ = primary_mass(grid, fiducial, derivatives=False)
     norm = numpy.trapz(reference, grid)
     return density / norm if norm > 0 else density
 

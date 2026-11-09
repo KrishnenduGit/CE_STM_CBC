@@ -20,7 +20,7 @@ per-event uncertainties are not negligible compared with the population width.
 Typical use::
 
     from load import load_population_catalogue
-    from pop_models import MadauDickinsonRedshift
+    from redshift import MadauDickinsonRedshift
     from pop_fisher import compute_pop_fisher_full
 
     catalogue = load_population_catalogue(path, snr_threshold=30.0)

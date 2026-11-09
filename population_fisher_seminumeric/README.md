@@ -8,6 +8,9 @@ finite-difference fallback).  Finite differences remain only where no closed
 form exists: the `Om`/`w0` columns of the spectral-siren score, and the
 Terms II-V machinery in `pop_fisher_higher_order.py`.
 
+The BNS equation-of-state measurement (`eos_relation_fisher.py` and its
+cross-checks) is described in [README_eos.md](README_eos.md).
+
 Every script takes `--fisher-file`, defaulting to the CE40+CE20+ET catalogue in
 this directory, and `--help` works everywhere.
 

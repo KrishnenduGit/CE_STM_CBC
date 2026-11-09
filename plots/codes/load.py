@@ -1,3 +1,4 @@
+import warnings
 import h5py, json, logging, numpy, pandas
 from dataclasses import dataclass, field
 from math import sqrt
@@ -801,6 +802,112 @@ class FisherResults:
                 posterior_samples["lambda_2"] >= 0
             )
         return posterior_samples[mask]
+
+    def physical_errors(self, number_of_samples=1000, rng=250114, chunk=2000, tidal=True):
+        """
+        1-sigma errors from the Fisher Gaussian truncated to the physical region, per event.
+
+        For every event ``number_of_samples`` points are drawn from the Fisher
+        Gaussian in the gwfast basis (fixed seed); the samples that violate
+            Mc > 0, 0 < eta <= 0.25, dL > 0, |chi_eff| < 1 [, LambdaTilde >= 0]
+        are discarded and the standard deviation of the survivors is returned,
+        with chi_eff = w1 chi1z + w2 chi2z and w_i = m_i,src / M. The eta
+        boundary is the one that matters: near-equal-mass systems keep only the
+        eta <= 0.25 half of their Gaussian, so their truncated sigma(eta) is
+        smaller than the covariance sigma(eta). No event is discarded here; the
+        caller decides what to do with events that keep few samples.
+
+        This is the vectorised, bilby-free counterpart of the sample-level
+        ``_apply_physicality_cuts``; it differs by cutting on the effective spin
+        instead of the component spins (the NS spin in NSBH is unconstrained, so
+        |chi_2| < 0.99 alone would reject nearly the whole population) and on
+        LambdaTilde in the Fisher basis instead of the component lambdas.
+
+        ``tidal=False`` skips the LambdaTilde cut; for NSBH LambdaTilde is
+        essentially unmeasured (sigma of order 100 for injected values near 0),
+        so the cut alone would reject the whole population.
+
+        Returns
+        -------
+        dict of numpy.ndarray, each of shape (total_events,):
+            "n_physical": number of retained samples (0 where the covariance is
+            NaN, i.e. undetected or failed inversion, or sampling overflowed);
+            "Mc", "eta", "dL", "chi_eff" [, "LambdaTilde"]: standard deviation
+            (ddof=1) over the retained samples, NaN where fewer than 2 survive.
+        """
+        idx = self.fisher_basis_index
+        generator = numpy.random.default_rng(rng)
+        with h5py.File(self.file_path, "r") as f:
+            n_total = f["covariance"].shape[2]
+            n_par = f["covariance"].shape[0]
+            par = {k: f["event_parameters"][k][:] for k in ("Mc", "eta", "dL", "chi1z", "chi2z", "m1_src", "m2_src")}
+            mean = numpy.zeros((n_total, n_par))
+            for k in ("Mc", "eta", "dL", "chi1z", "chi2z"):
+                mean[:, idx[k]] = par[k]
+            keys = ["Mc", "eta", "dL", "chi_eff"]
+            if "LambdaTilde" in idx:
+                mean[:, idx["LambdaTilde"]] = lambda_tilde(
+                    f["event_parameters"]["Lambda1"][:], f["event_parameters"]["Lambda2"][:], par["eta"]
+                )
+                keys.append("LambdaTilde")
+            w1 = par["m1_src"] / (par["m1_src"] + par["m2_src"])
+            n_physical = numpy.zeros(n_total, dtype=int)
+            sigma = numpy.full((n_total, len(keys)), numpy.nan)
+            for start in range(0, n_total, chunk):
+                block = slice(start, min(start + chunk, n_total))
+                cov = f["covariance"][:, :, block].transpose(2, 0, 1)
+                usable = numpy.isfinite(cov).all(axis=(1, 2))
+                if not usable.any():
+                    continue
+                cov = cov[usable]
+                cov = (cov + cov.transpose(0, 2, 1)) / 2
+                eigenvalues, eigenvectors = numpy.linalg.eigh(cov)
+                scale = eigenvectors * numpy.sqrt(numpy.clip(eigenvalues, 0, None))[:, None, :]
+                z = generator.standard_normal((cov.shape[0], number_of_samples, n_par))
+                w = w1[block][usable]
+                with numpy.errstate(over="ignore", invalid="ignore", divide="ignore"):
+                    x = mean[block][usable][:, None, :] + z @ scale.transpose(0, 2, 1)
+                    ok = self._fisher_basis_physical(x, idx, w, tidal) & numpy.isfinite(x).all(axis=2)
+                    columns = [x[:, :, idx[k]] for k in ("Mc", "eta", "dL")]
+                    columns.append(w[:, None] * x[:, :, idx["chi1z"]] + (1 - w)[:, None] * x[:, :, idx["chi2z"]])
+                    if "LambdaTilde" in idx:
+                        columns.append(x[:, :, idx["LambdaTilde"]])
+                    y = numpy.where(ok[:, :, None], numpy.stack(columns, axis=2), numpy.nan)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        std = numpy.nanstd(y, axis=1, ddof=1)
+                rows = numpy.where(usable)[0] + start
+                n_physical[rows] = ok.sum(axis=1)
+                sigma[rows] = numpy.where(ok.sum(axis=1)[:, None] >= 2, std, numpy.nan)
+        out = {k: sigma[:, i] for i, k in enumerate(keys)}
+        out["n_physical"] = n_physical
+        return out
+
+    @staticmethod
+    def _fisher_basis_physical(x, idx, w1, tidal=True):
+        """Boolean mask over samples x of shape (events, samples, params) in the gwfast basis."""
+        eta = x[:, :, idx["eta"]]
+        chi_eff = w1[:, None] * x[:, :, idx["chi1z"]] + (1 - w1)[:, None] * x[:, :, idx["chi2z"]]
+        mask = (
+            (x[:, :, idx["Mc"]] > 0)
+            & (eta > 0)
+            & (eta <= 0.25)
+            & (x[:, :, idx["dL"]] > 0)
+            & (numpy.abs(chi_eff) < 1)
+        )
+        if tidal and "LambdaTilde" in idx:
+            mask &= x[:, :, idx["LambdaTilde"]] >= 0
+        return mask
+
+
+def lambda_tilde(lambda_1, lambda_2, eta):
+    """LambdaTilde of Wade et al. 2014 (bilby's lambda_1_lambda_2_to_lambda_tilde), m1 >= m2."""
+    lambda_plus = lambda_1 + lambda_2
+    lambda_minus = lambda_1 - lambda_2
+    return 8 / 13 * (
+        (1 + 7 * eta - 31 * eta**2) * lambda_plus
+        + numpy.sqrt(numpy.clip(1 - 4 * eta, 0, None)) * (1 + 9 * eta - 11 * eta**2) * lambda_minus
+    )
 
 
 # ---------------------------------------------------------------------------

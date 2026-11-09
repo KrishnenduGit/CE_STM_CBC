@@ -18,7 +18,7 @@ warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 from load import load_population_catalogue
 from plot_utils import plot_corner, plot_redshift_distribution
-from pop_models import MadauDickinsonRedshift
+from redshift import MadauDickinsonRedshift
 from pop_fisher import compute_pop_fisher_full
 
 # ===========================================================================
